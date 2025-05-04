@@ -1,0 +1,8 @@
+openai
+language-tool-python
+pandas
+librosa
+pydub
+scipy
+matplotlib
+gradio  # (Optional, for UI demo)

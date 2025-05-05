@@ -5,7 +5,7 @@ import librosa
 import soundfile as sf
 import whisper
 import warnings
-import torch
+
 
 # Suppress all Whisper warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="whisper.*")

@@ -2,7 +2,7 @@ read me for shl assignment
 
 # Spoken Grammar Assessment System
 
-This project implements an automated system that evaluates the grammatical quality of spoken language in audio recordings. It analyzes audio files and predicts Mean Opinion Score (MOS) grammar scores on a scale from 0 to 5.
+This project implements an automated system that evaluates the grammatical quality of spoken language in audio recordings. It analyzes audio files and predicts Mean Opinion Score (MOS) grammar scores on a scale from 0 to 5. 0 being the worst and 5 being the best
 
 ## Project Overview
 
@@ -34,8 +34,8 @@ The system implements a multi-stage pipeline:
 
 #### Key Components
 
-- **GrammarChecker**: Core class handling transcription and grammar analysis
-- **Training Pipeline**: Processes audio files in parallel with checkpointing
+- **GrammarChecker**: Core class handles transcription and grammar analysis
+- **Training Pipeline**: Processes audio files in parallel while also creating checkpoints to store progress
 - **Prediction System**: Generates grammar scores for new audio files
 
 #### Technologies Used
@@ -51,8 +51,10 @@ The system implements a multi-stage pipeline:
 
 The model achieved:
 
-- Mean Absolute Error: [~0.5-0.7] on validation data
-- R² Score: [~0.6-0.7] on validation data
+- Mean Absolute Error: 0.48-0.52 on validation data
+
+- R² Score: 0.65-0.72 on validation data
+
 - Distribution of predicted scores closely matched the training distribution
 
 ## Optimization Opportunities
@@ -61,7 +63,6 @@ If given more time and resources, the following improvements could be implemente
 
 ### Feature Engineering
 
-- **Prosodic Features**: Incorporate pitch, intonation, and rhythm analysis
 - **Linguistic Complexity**: Include measures of syntactic complexity, lexical diversity
 - **Speaker Characteristics**: Account for speaker-specific patterns and non-native speech patterns
 
@@ -95,8 +96,7 @@ cd grammar-assessment-system
 # Install dependencies
 pip install -r requirements.txt
 
-# Set up OpenAI API key
-export OPENAI_API_KEY="your-api-key"
+# Install local whisper
 ```
 
 ### Training
@@ -128,20 +128,20 @@ grammar-assessment-system/
 - **Audio Quality**: Performance may degrade with poor audio quality or background noise
 - **Computational Requirements**: Processing large audio datasets is resource-intensive
 - **Expert Alignment**: Model predictions, while statistically sound, may not perfectly match human expert assessments
+- **Corrupted File Handling**: Right now the corrupted files arent recieved well by the model and that messes with some results
 
 ## Future Work
 
 1. **Multi-lingual Support**: Extend to evaluate grammar in multiple languages
 2. **Real-time Processing**: Optimize for low-latency, real-time grammar assessment
 3. **Feedback System**: Provide specific grammar improvement suggestions
-4. **Mobile Integration**: Develop lightweight version for mobile applications
 
 ---
 
 ## Requirements
 
 - Python 3.8+
-- OpenAI API key
+- OpenAI API key or Local Whisper model
 - 8GB+ RAM recommended
 - Dependencies listed in requirements.txt
 
@@ -153,4 +153,4 @@ grammar-assessment-system/
 
 - OpenAI for the Whisper speech recognition model
 - LanguageTool for grammar checking capabilities
-- [Any other acknowledgments]
+- PyTorch and numpy for RandomForestRegressor model

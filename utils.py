@@ -1,176 +1,119 @@
-import openai #For whisper
-import language_tool_python #To check grammar mistakes 
-import librosa  #package to analayze audio
-from pydub import AudioSegment #manipulate audio
-import os  #os dependant functionality
-from typing import Union
-AUDIO_DIR = "../shl_dataset/audios/" #Directory where audio files are stored 
+import os
+from typing import Dict, List, Union
+import language_tool_python
+import librosa
+import soundfile as sf
+import whisper
+import warnings
+import torch
 
+# Suppress all Whisper warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="whisper.*")
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.*")
 
 class GrammarChecker:
     def __init__(self):
-        self.tool = language_tool_python.LanguageTool('en-US', config={ 'cacheSize': 1000, 'pipelineCaching': True })
+        # Initialize with silent Whisper model
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.whisper_model = whisper.load_model("base").float()  # Force FP32
+            self.tool = language_tool_python.LanguageTool('en-US')
         
         self.ERRORS = {
-            # Verb Errors
-            'EN_VERB_AGREEMENT',       # "He go"
-            'EN_VERB_TENSE',           # "I seen it"
-            'EN_INFINITIVE',           # "She can to go"
-            'EN_PAST_PARTICIPLE',      # "I have ate"
-            'EN_IRREGULAR_VERBS',      # "She swimmed"
-            
-            # Pronoun Errors
-            'EN_PRONOMINAL_AGREEMENT', # "Me and him went"
-            'EN_CASE',                 # "Between you and I"
-            
-            # Article Errors
-            'EN_A_VS_AN',              # "a apple"
-            'EN_ARTICLE_REQUIRED',     # "She is doctor"
-            
-            # Preposition Errors
-            'EN_PREPOSITIONS',         # "Dependent of"
-            'EN_CONFUSED_PREPOSITION', # "On the picture" (should be "in")
-            
-            # Word Order
-            'EN_WORD_ORDER',           # "I yesterday went"
-            'EN_QUANTIFIER_ORDER',     # "I have much books"
-            
-            # Negation
-            'EN_DOUBLE_NEGATIVE',      # "I don't know nothing"
-            'EN_NEGATION_MISUSE',      # "I no like it"
-            
-            # Question Formation
-            'EN_QUESTION_FORM',        # "You are coming?"
-            'EN_QUESTION_TAGS',        # "You like it, is it?"
-            
-            # Count/Non-count Nouns
-            'EN_COUNTABILITY',         # "many informations"
-            'EN_PLURAL_SINGULAR',      # "three child"
-            
-            # Modals
-            'EN_MODAL_VERBS',          # "She must to go"
-            'EN_MODAL_VERB_SEQUENCE',  # "He can goes"
-            
-            # Conditionals
-            'EN_CONDITIONALS',         # "If I will go"
-            
-            # Reported Speech
-            'EN_REPORTED_SPEECH',      # "She said she is coming"
-            
-            # Comparative/Superlative
-            'EN_COMPARATIVES',         # "more better"
-            'EN_SUPERLATIVES',         # "the most happy"
-            
-            # Contractions
-            'EN_CONTRACTIONS',         # "I am" → "I'm" (formal vs informal)
-            
-            # Fillers
-            'EN_FILLERS',              # "um", "uh" (fluency markers)
-            
-            # Informal Usage
-            'EN_INFORMAL_WORDS',       # "gonna", "wanna"
-            'EN_SLANG',                # "ain't", "y'all"
-            
-            # Pronunciation-based
-            'EN_HOMOPHONE_ERRORS',     # "their/there", "your/you're"
-            
-            # # Plain english rule
-            # 'EN_PLAIN_ENGLISH',  
-            
-            # # Repetition
-            # 'EN_REPEATED_WORDS',       # "the the"
+            'EN_VERB_AGREEMENT': 3.0,
+            'EN_VERB_TENSE': 3.0,
+            'EN_PREPOSITIONS': 2.0,
+            'EN_ARTICLE_REQUIRED': 2.0,
+            'EN_QUESTION_FORM': 2.0,
+            'EN_INFINITIVE': 1.0,
+            'EN_FILLERS': 0.5
         }
-    
-    def transcribe_audio(self, audio_filename:str) -> str:
-        audio_path = os.path.join(AUDIO_DIR, audio_filename)
-        with open(audio_path, "rb") as audio_file:
-            result = openai.Audio.transcribe(
-                model="whisper-1",
-                file=audio_file,
-                response_format="text"
-            ).strip() 
-        return result
-    
-    def _get_error_weight(self, rule_id: str) -> float:
-        # Very bad mistakes 
-        if rule_id in {
-            'EN_VERB_AGREEMENT', 
-            'EN_VERB_TENSE',
-            'EN_PRONOMINAL_AGREEMENT',
-            'EN_CASE'
-        }:
-            return 3.0
-        
-        # Pretty bad mistakes
-        elif rule_id in {
-            'EN_PREPOSITIONS',
-            'EN_ARTICLE_REQUIRED',
-            'EN_PAST_PARTICIPLE',
-            'EN_QUESTION_FORM'
-        }:
-            return 2.0
-        
-        # Not too bad 
-        else:
-            return 1.0  # All other errors
-    
-    def extract_audio_features(self, audio_filename: str) -> dict[str, float]:
-        #Extract speech rate and pause frequency
-        audio_path = os.path.join(AUDIO_DIR, audio_filename)
-        y, sr = librosa.load(audio_path)
-        duration = librosa.get_duration(y=y, sr=sr)
-        
-        # Speech rate (words/sec)
-        text = self.transcribe_audio(audio_filename)
-        words = len(text.split())
-        
-        # Pause frequency (pauses/sec)
-        intervals = librosa.effects.split(y, top_db=20)  # Detect silent pauses
-        
-        return {
-            "speech_rate": words / duration if duration > 0 else 0,
-            "pause_freq": len(intervals) / duration if duration > 0 else 0
-        }
-    
-    def analyze_audio(self, audio_filename: str) -> dict[str, Union[float, list[dict]]]:
-        text = self.transcribe_audio(audio_filename)
-        if not text.strip():
-            return {"score": 0.0, "errors": []}
-        
-        # Grammar analysis
-        matches = self.tool.check(text)
-        errors = []
-        total_weight = 0.0
-        
-        for mistake in matches:
-            if mistake.ruleId in self.ERRORS:
-                weight = self._get_error_weight(mistake.ruleId)
-                errors.append({
-                    "type": mistake.ruleId,
-                    "message": mistake.message,
-                    "correction": mistake.replacements[0] if mistake.replacements else "",
-                    "weight": weight
-                })
-                total_weight += weight
-        
-        # Calculate score (0-5 scale)
-        words = len(text.split())
-        score = max(0.0, min(5.0, 5 - (total_weight / max(1, words)) * 1.5))
-        
-        return {
-            "score": round(score, 2),
-            "errors": errors,
-            "text": text
-        }
-    
-    def safe_transcribe(self, audio_filename: str) -> str:
+
+    def transcribe_audio(self, audio_path: str) -> str:
+        # There were some corrupted files in the dataset so added a try catch block
         try:
-            return self.transcribe_audio(audio_filename)
+            # First validate audio file
+            if not os.path.exists(audio_path):
+                raise ValueError(f"File not found: {audio_path}")
+                
+            # Check file size (empty files cause segfaults)
+            if os.path.getsize(audio_path) < 1024:  # Less than 1KB
+                raise ValueError("File too small (likely corrupt)")
+                
+            # Convert to WAV if needed (Whisper works best with WAV)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                try:
+                    result = self.whisper_model.transcribe(audio_path)
+                    return result["text"].strip()
+                except RuntimeError as e:
+                    # Fallback to librosa loading
+                    y, sr = librosa.load(audio_path, sr=16000)  # Force 16kHz
+                    temp_path = "/tmp/audio_temp.wav"
+                    librosa.output.write_wav(temp_path, y, sr)
+                    result = self.whisper_model.transcribe(temp_path)
+                    os.remove(temp_path)
+                    return result["text"].strip()
+                    
         except Exception as e:
-            print(f"Error transcribing {audio_filename}: {str(e)}")
+            print(f"CRITICAL: Failed to process {audio_path}: {str(e)}")
             return ""
 
-    
-        
+    def load_audio(self, audio_path: str):
+        """Optimized audio loading with fallbacks"""
+        try:
+            return sf.read(audio_path)
+        except Exception as e:
+            print(f"SoundFile failed, using librosa: {str(e)}")
+            return librosa.load(audio_path)
 
+    def analyze_audio(self, audio_filename: str) -> Dict[str, Union[float, List[Dict], Dict]]:
+        """Silent analysis with comprehensive error handling"""
+        default_result = {
+            'score': 0.0, 
+            'errors': [], 
+            'features': {'speech_rate': 0.0, 'pause_freq': 0.0},
+            'text': ''
+        }
         
+        try:
+            audio_path = os.path.join("/home/hari/shl_dataset/audios/train", audio_filename)
+            y, sr = self.load_audio(audio_path)
+            duration = librosa.get_duration(y=y, sr=sr)
+            
+            text = self.transcribe_audio(audio_path)
+            if not text.strip():
+                return default_result
+                
+            matches = self.tool.check(text)
+            errors = []
+            total_weight = 0.0
+            
+            for mistake in matches:
+                if mistake.ruleId in self.ERRORS:
+                    weight = self.ERRORS[mistake.ruleId]
+                    errors.append({
+                        'type': mistake.ruleId,
+                        'message': mistake.message,
+                        'weight': weight
+                    })
+                    total_weight += weight
+            
+            words = len(text.split())
+            score = max(0.0, min(5.0, 5 - (total_weight / max(1, words) * 1.5)))
+            
+            intervals = librosa.effects.split(y, top_db=20)
+            
+            return {
+                'score': round(score, 2),
+                'errors': errors,
+                'features': {
+                    'speech_rate': words / duration if duration > 0 else 0,
+                    'pause_freq': len(intervals) / duration if duration > 0 else 0
+                },
+                'text': text
+            }
+            
+        except Exception as e:
+            print(f"Analysis failed for {audio_filename}: {str(e)}")
+            return default_result

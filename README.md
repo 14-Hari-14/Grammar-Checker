@@ -52,7 +52,7 @@ The system implements a multi-stage pipeline:
 The model achieved:
 
 - **Mean Absolute Error**: 0.48–0.52 on validation data
-  - (The average of the absolute differences between predicted and actual values, indicating overall prediction error.)
+  - (The average of the absolute differences between predicted and actual values, that shows overall prediction error.)
 - **R² Score**: 0.65–0.72 on validation data
   - (Measures how well the model explains the variability of the target; closer to 1 means better fit.)
 - Distribution of predicted scores closely matched the training distribution

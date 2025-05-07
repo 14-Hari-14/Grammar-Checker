@@ -4,10 +4,8 @@ import warnings
 import pandas as pd
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import multiprocessing
 from tqdm import tqdm
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 from utils import GrammarChecker
 
@@ -21,9 +19,9 @@ CONFIG = {
         "train": "/home/hari/shl_dataset/audios/train",
         "test": "/home/hari/shl_dataset/audios/test" 
     },
-    "checkpoint": "progress.json",
-    "model_path": "grammar_model.pkl",
-    "max_files": 300,  # Safety limit for your deadline
+    "checkpoint": "progress_new.json",
+    "model_path": "grammar_model_new.pkl",
+    "max_files": 444,  # Batching the training files here so that processing is faster
     "min_file_size": 1024,  # 1KB minimum to avoid corrupt files
     "rf_params": {
         "n_estimators": 100,  # Reduced for speed
@@ -34,11 +32,11 @@ CONFIG = {
 }
 
 def validate_audio_file(path: str) -> bool:
-    """Check if file exists and meets size requirements"""
+    # Check if file exists and meets size requirements
     return os.path.exists(path) and os.path.getsize(path) >= CONFIG['min_file_size']
 
 def load_checkpoint():
-    """Load existing progress if available"""
+    # Load existing progress if available
     try:
         with open(CONFIG['checkpoint'], 'r') as f:
             data = json.load(f)
@@ -48,7 +46,7 @@ def load_checkpoint():
         return set(), [], []
 
 def save_checkpoint(processed_files, features, labels):
-    """Save current progress"""
+    # Save current progress
     with open(CONFIG['checkpoint'], 'w') as f:
         json.dump({
             'processed_files': list(processed_files),
@@ -57,11 +55,11 @@ def save_checkpoint(processed_files, features, labels):
         }, f)
 
 def process_file(row):
-    print(f"START Processing {row['filename']}")  # <-- ADD THIS LINE
+    print(f"START Processing {row['filename']}")  
     audio_path = os.path.join(CONFIG['audio_paths']['train'], row['filename'])
     
     if not validate_audio_file(audio_path):
-        print(f"SKIPPED {row['filename']}")  # <-- ADD THIS
+        print(f"SKIPPED {row['filename']}")  
         return None
         
     try:
@@ -72,23 +70,17 @@ def process_file(row):
                 analysis['features']['pause_freq'], len(analysis['errors']),
                 row['label'])
     except Exception as e:
-        print(f"FAILED {row['filename']}: {str(e)}")  # <-- ADD THIS
+        print(f"FAILED {row['filename']}: {str(e)}")  
         return None
 
-# Update import statement
-
-
-# In the main function, define tasks before using ProcessPoolExecutor
 def main():
     # Load data
     train_df = pd.read_csv("/home/hari/shl_dataset/train.csv").head(CONFIG['max_files'])
-    test_df = pd.read_csv("/home/hari/shl_dataset/test.csv")
     
     # Initialize progress
     processed_files, features, labels = load_checkpoint()
     
-    # Define the tasks - these are the rows that need processing
-    # Filter out already processed files
+    # Skipping already processed files
     tasks = [row for _, row in train_df.iterrows() 
              if row['filename'] not in processed_files]
     
@@ -107,12 +99,11 @@ def main():
                 save_checkpoint(processed_files, features, labels)
     
     # Remove the incorrect section using "results" variable
-    # Instead, we already collected results in the loop above
     
     # Train model
-    X_train, y_train = np.array(features), np.array(labels)
+    x_train, y_train = np.array(features), np.array(labels)
     model = RandomForestRegressor(**CONFIG['rf_params'])
-    model.fit(X_train, y_train)
+    model.fit(x_train, y_train)
     
     # Save everything
     joblib.dump(model, CONFIG['model_path'])

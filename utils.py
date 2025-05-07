@@ -5,7 +5,7 @@ import librosa
 import soundfile as sf
 import whisper
 import warnings
-
+import numpy as np
 
 # Suppress all Whisper warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="whisper.*")
@@ -30,17 +30,16 @@ class GrammarChecker:
         }
 
     def transcribe_audio(self, audio_path: str) -> str:
-        # There were some corrupted files in the dataset so added a try catch block
         try:
-            # First validate audio file
+            # Checking if the file is valid
             if not os.path.exists(audio_path):
                 raise ValueError(f"File not found: {audio_path}")
                 
-            # Check file size (empty files cause segfaults)
+            # Check the file size since empty files cause segmentation faults
             if os.path.getsize(audio_path) < 1024:  # Less than 1KB
                 raise ValueError("File too small (likely corrupt)")
                 
-            # Convert to WAV if needed (Whisper works best with WAV)
+            # Meat and potatoes of the function transcribing the audio is done here
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 try:
@@ -50,7 +49,7 @@ class GrammarChecker:
                     # Fallback to librosa loading
                     y, sr = librosa.load(audio_path, sr=16000)  # Force 16kHz
                     temp_path = "/tmp/audio_temp.wav"
-                    librosa.output.write_wav(temp_path, y, sr)
+                    sf.write(temp_path, y, sr)
                     result = self.whisper_model.transcribe(temp_path)
                     os.remove(temp_path)
                     return result["text"].strip()
@@ -60,15 +59,15 @@ class GrammarChecker:
             return ""
 
     def load_audio(self, audio_path: str):
-        """Optimized audio loading with fallbacks"""
+        # Loading audio file with error handling
         try:
             return sf.read(audio_path)
         except Exception as e:
             print(f"SoundFile failed, using librosa: {str(e)}")
-            return librosa.load(audio_path)
+            return librosa.load(audio_path, sr=16000)
 
     def analyze_audio(self, audio_filename: str) -> Dict[str, Union[float, List[Dict], Dict]]:
-        """Silent analysis with comprehensive error handling"""
+        # Analyzing the audio file and returning a structured result
         default_result = {
             'score': 0.0, 
             'errors': [], 
@@ -89,6 +88,7 @@ class GrammarChecker:
             errors = []
             total_weight = 0.0
             
+            # Checking for severity of grammar mistakes
             for mistake in matches:
                 if mistake.ruleId in self.ERRORS:
                     weight = self.ERRORS[mistake.ruleId]

@@ -6,3 +6,10 @@ __pycache__/
 # Environment files
 .env
 *.env
+
+#previous progress and submission files
+.progress.json
+
+#previously trained model
+.grammar_model.pkl
+

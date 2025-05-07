@@ -1,5 +1,3 @@
-read me for shl assignment
-
 # Spoken Grammar Assessment System
 
 This project implements an automated system that evaluates the grammatical quality of spoken language in audio recordings. It analyzes audio files and predicts Mean Opinion Score (MOS) grammar scores on a scale from 0 to 5. 0 being the worst and 5 being the best
@@ -97,6 +95,7 @@ cd grammar-assessment-system
 pip install -r requirements.txt
 
 # Install local whisper
+pip install git+https://github.com/openai/whisper.git\
 ```
 
 ### Training
@@ -147,7 +146,14 @@ grammar-assessment-system/
 
 ## License
 
-[Include appropriate license information here]
+MIT Licensing
+
+## Output
+
+Prediction output also showing which distorted files are removed
+![prediction output](image-1.png)
+
+![errors faced during training](shl_error_2.png)
 
 ## Acknowledgments
 

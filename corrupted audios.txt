@@ -1,0 +1,22 @@
+corrupted audios in the new training and testing dataset
+train
+audio_252.wavs
+
+testing
+audio_153.wav
+audio_590.wav
+audio_57.wav
+audio_749.wav
+audio_978.wav
+audio_508.wav
+audio_377.wav
+audio_390.wav
+audio_415.wav
+audio_108.wav
+audio_988.wav
+audio_257.wav
+audio_1092.wav
+audio_41.wav
+audio_1158.wav
+audio_681.wav
+audio_822.wav

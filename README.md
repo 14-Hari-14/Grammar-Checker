@@ -127,7 +127,7 @@ grammar-assessment-system/
 - **Audio Quality**: Performance may degrade with poor audio quality or background noise
 - **Computational Requirements**: Processing large audio datasets is resource-intensive
 - **Expert Alignment**: Model predictions, while statistically sound, may not perfectly match human expert assessments
-- **Corrupted File Handling**: Right now the corrupted files arent recieved well by the model and that messes with some results
+- **Corrupted File Handling**: Right now the corrupted files handling is being done but its not foolproof so some files slip unnoticed and get a higher rating
 
 ## Future Work
 

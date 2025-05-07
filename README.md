@@ -51,13 +51,15 @@ The system implements a multi-stage pipeline:
 
 The model achieved:
 
-- Mean Absolute Error: 0.48–0.52 on validation data
-- R² Score: 0.65–0.72 on validation data
+- **Mean Absolute Error**: 0.48–0.52 on validation data
+  - (The average of the absolute differences between predicted and actual values, indicating overall prediction error.)
+- **R² Score**: 0.65–0.72 on validation data
+  - (Measures how well the model explains the variability of the target; closer to 1 means better fit.)
 - Distribution of predicted scores closely matched the training distribution
 
 ## Implemented Optimizations
 
-We made several improvements to boost performance and reliability:
+While working on this project I made several improvements to boost performance and reliability:
 
 ### Whisper Integration
 
@@ -91,7 +93,7 @@ We made several improvements to boost performance and reliability:
   - Audio amplitude analysis
   - Zero-feature detection
 
-- **Impact:** Successfully caught all corrupted files
+- **Impact:** Catching about 90% of all corrupted files
 
 ### Parallel Processing
 

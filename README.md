@@ -93,7 +93,7 @@ While working on this project I made several improvements to boost performance a
   - Audio amplitude analysis
   - Zero-feature detection
 
-- **Impact:** Catching about 90% of all corrupted files
+- **Impact:** Identifying and removing about 90% of all corrupted files
 
 ### Parallel Processing
 

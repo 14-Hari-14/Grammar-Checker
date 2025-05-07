@@ -1,6 +1,6 @@
 # Spoken Grammar Assessment System
 
-This project implements an automated system that evaluates the grammatical quality of spoken language in audio recordings. It analyzes audio files and predicts Mean Opinion Score (MOS) grammar scores on a scale from 0 to 5. 0 being the worst and 5 being the best
+This project implements an automated system that evaluates the grammatical quality of spoken language in audio recordings. It analyzes audio files and predicts Mean Opinion Score (MOS) grammar scores on a scale from 0 to 5 — 0 being the lowest and 5 being the best.
 
 ## Project Overview
 
@@ -10,7 +10,7 @@ The system processes audio recordings of 45-60 seconds in length, transcribes th
 
 - **Training dataset**: 444 audio samples with expert-assigned MOS scores
 - **Testing dataset**: 195 audio samples for evaluation
-- **Audio format**: 45-60 second spoken recordings
+- **Audio format**: 45–60 second spoken recordings
 
 ## Technical Approach
 
@@ -21,10 +21,12 @@ The system implements a multi-stage pipeline:
 1. **Speech-to-Text Conversion**: Uses OpenAI's Whisper model to transcribe spoken audio to text
 2. **Grammar Feature Extraction**: Analyzes transcribed text using LanguageTool to identify grammar errors
 3. **Feature Engineering**: Extracts features including:
+
    - Grammar error counts (categorized by severity)
    - Speech rate metrics
    - Pause frequency
    - Text complexity measures
+
 4. **Prediction Model**: Uses a Random Forest Regressor to predict grammar quality scores
 5. **Evaluation**: Measures model performance using Mean Absolute Error and R²
 
@@ -32,105 +34,95 @@ The system implements a multi-stage pipeline:
 
 #### Key Components
 
-- **GrammarChecker**: Core class handles transcription and grammar analysis
+- **GrammarChecker**: Core class that handles transcription and grammar analysis
 - **Training Pipeline**: Processes audio files in parallel while also creating checkpoints to store progress
 - **Prediction System**: Generates grammar scores for new audio files
 
 #### Technologies Used
 
 - **Speech Recognition**: OpenAI Whisper
-- **Grammar Analysis**: LanguageTool Python
+- **Grammar Analysis**: LanguageTool (Python wrapper)
 - **Audio Processing**: Librosa, PyDub
 - **Machine Learning**: Scikit-learn (RandomForestRegressor)
 - **Data Processing**: Pandas, NumPy
-- **Parallel Processing**: Python's concurrent.futures
+- **Parallel Processing**: Python's `concurrent.futures`
 
 ## Results
 
 The model achieved:
 
-- Mean Absolute Error: 0.48-0.52 on validation data
-
-- R² Score: 0.65-0.72 on validation data
-
+- Mean Absolute Error: 0.48–0.52 on validation data
+- R² Score: 0.65–0.72 on validation data
 - Distribution of predicted scores closely matched the training distribution
 
-## Optimization Opportunities
+## Implemented Optimizations
 
-# Implemented Optimizations
+We made several improvements to boost performance and reliability:
 
-We significantly improved the system through these key enhancements:
+### Whisper Integration
 
-## Whisper Integration
+- **Initial:** Used OpenAI's Whisper API (required network, had rate limits)
+- **Optimized:** Switched to local Whisper model (runs offline)
+- **Impact:** 4× faster processing, no API limits or costs
 
-- **Initial:** Relied on OpenAI's API (network-dependent, rate-limited)
-- **Optimized:** Switched to local Whisper model (faster, offline-capable)
-- **Impact:** 4× faster processing, no API costs
-
----
-
-## Compute Efficiency
+### Compute Efficiency
 
 - **Initial:** CPU-only processing
-- **Optimized:** GPU acceleration for Whisper and feature extraction
-- **Impact:** 8–12× speedup for audio transcription
+- **Optimized:** Added GPU support for Whisper and feature extraction
+- **Impact:** 8–12× faster transcription
 
----
+### Progress Tracking
 
-## Progress Tracking
+- **Initial:** Required full reprocessing if interrupted
+- **Optimized:** Added checkpoints for:
 
-- **Initial:** Full reprocessing required after interruptions
-- **Optimized:** Checkpoint system stores:
   - Processed file list
   - Extracted features
   - Partial model state
-- **Impact:** Saves 50+ hours on dataset reprocessing
 
----
+- **Impact:** Saved 50+ hours of reprocessing
 
-## Corrupted File Handling
+### Corrupted File Handling
 
-- **Initial:** Silent failures distorted predictions
-- **Optimized:** Multi-stage validation:
+- **Initial:** Corrupted audio caused silent prediction errors
+- **Optimized:** Added multi-stage validation:
+
   - File size checks
   - Audio amplitude analysis
   - Zero-feature detection
-- **Impact:** 100% corrupted file detection rate
 
----
+- **Impact:** Successfully caught all corrupted files
 
-## Parallel Processing
+### Parallel Processing
 
 - **Initial:** Sequential file processing
-- **Optimized:** `concurrent.futures` with 4–8 workers
+- **Optimized:** Used `concurrent.futures` with 4–8 workers
 - **Impact:** 3–5× faster feature extraction
 
----
-
-If given more time and resources, the following improvements could be implemented:
+## Future Optimization Ideas
 
 ### Feature Engineering
 
-- **Linguistic Complexity**: Include measures of syntactic complexity, lexical diversity
-- **Speaker Characteristics**: Account for speaker-specific patterns and non-native speech patterns
+- Add more linguistic metrics: syntactic complexity, lexical diversity
+- Incorporate speaker-specific factors for better generalization
 
 ### Model Improvements
 
-- **Deep Learning Approach**: Implement end-to-end neural networks (CNN+RNN) to process audio directly
-- **Transfer Learning**: Utilize pre-trained language models like BERT for more sophisticated linguistic analysis
-- **Ensemble Methods**: Combine multiple predictive models for improved accuracy
+- Use deep learning models like CNNs/RNNs for direct audio input
+- Leverage language models like BERT for better text analysis
+- Try ensemble models to combine strengths of different approaches
 
 ### Performance Optimization
 
-- **Distributed Processing**: Implement distributed computing for faster audio processing
-- **GPU Acceleration**: Utilize GPU for speech recognition and deep learning components
-- **Caching Strategy**: Implement more sophisticated caching to avoid redundant processing
+- Add support for distributed computing
+- Extend GPU acceleration beyond Whisper
+- Improve caching to avoid repeated processing
 
 ### Evaluation Enhancements
 
-- **Human Evaluation Loop**: Incorporate feedback from human evaluators to refine the model
-- **Cross-validation**: Implement more rigorous cross-validation approaches
-- **Confidence Scores**: Add prediction confidence metrics to highlight uncertain assessments
+- Include feedback loop with human evaluations
+- Add more rigorous cross-validation techniques
+- Include confidence scores for each prediction
 
 ## Usage Instructions
 
@@ -145,7 +137,7 @@ cd grammar-assessment-system
 pip install -r requirements.txt
 
 # Install local whisper
-pip install git+https://github.com/openai/whisper.git\
+pip install git+https://github.com/openai/whisper.git
 ```
 
 ### Training
@@ -173,42 +165,41 @@ grammar-assessment-system/
 
 ## Limitations and Considerations
 
-- **Language Support**: Currently optimized for English speech only
-- **Audio Quality**: Performance may degrade with poor audio quality or background noise
-- **Computational Requirements**: Processing large audio datasets is resource-intensive
-- **Expert Alignment**: Model predictions, while statistically sound, may not perfectly match human expert assessments
-- **Corrupted File Handling**: Right now the corrupted files handling is being done but its not foolproof so some files slip unnoticed and get a higher rating
+- Only optimized for English audio inputs
+- Background noise or unclear speech can affect accuracy
+- Heavy computation — requires decent hardware
+- Model outputs might still miss subtle grammar issues
+- Some corrupted files might occasionally get through despite checks
 
 ## Future Work
 
-1. **Multi-lingual Support**: Extend to evaluate grammar in multiple languages
-2. **Real-time Processing**: Optimize for low-latency, real-time grammar assessment
-3. **Feedback System**: Provide specific grammar improvement suggestions
-
----
+1. Support for multiple languages
+2. Optimize for low-latency / real-time use
+3. Add feedback-based grammar suggestions
 
 ## Requirements
 
 - Python 3.8+
-- OpenAI API key or Local Whisper model
+- OpenAI API key (or use local Whisper)
 - 8GB+ RAM recommended
-- Dependencies listed in requirements.txt
+- See requirements.txt for full list
 
 ## License
 
-MIT Licensing
+MIT License
 
-## Output
+## Output Examples
 
-Prediction output also showing which distorted files are removed
+Prediction output also shows which files were skipped due to corruption:
+
 ![prediction output](image-1.png)
 
-Some screenshots during training this specific one shows the error where the process is blocked by some other process causing the training to be halted and checkpoints to be created
+Training sometimes had issues when multiple processes clashed. This screenshot shows one such error (checkpoints were created before retrying):
 
 ![errors faced during training](shl_error_2.png)
 
 ## Acknowledgments
 
-- OpenAI for the Whisper speech recognition model
-- LanguageTool for grammar checking capabilities
-- PyTorch and numpy for RandomForestRegressor model
+- OpenAI for the Whisper model
+- LanguageTool for grammar analysis tools
+- PyTorch, NumPy, and scikit-learn for model training and data handling

@@ -153,6 +153,8 @@ MIT Licensing
 Prediction output also showing which distorted files are removed
 ![prediction output](image-1.png)
 
+Some screenshots during training this specific one shows the error where the process is blocked by some other process causing the training to be halted and checkpoints to be created
+
 ![errors faced during training](shl_error_2.png)
 
 ## Acknowledgments
